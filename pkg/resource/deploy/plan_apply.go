@@ -20,8 +20,6 @@ import (
 	"github.com/pkg/errors"
 
 	"github.com/pulumi/pulumi/pkg/resource"
-	"github.com/pulumi/pulumi/pkg/resource/plugin"
-	"github.com/pulumi/pulumi/pkg/tokens"
 	"github.com/pulumi/pulumi/pkg/util/contract"
 	"github.com/pulumi/pulumi/pkg/util/logging"
 )
@@ -42,7 +40,7 @@ type Events interface {
 // Start initializes and returns an iterator that can be used to step through a plan's individual steps.
 func (p *Plan) Start(opts Options) (*PlanIterator, error) {
 	// Ask the source for its iterator.
-	src, err := p.source.Iterate(opts)
+	src, err := p.source.Iterate(opts, p)
 	if err != nil {
 		return nil, err
 	}
@@ -252,17 +250,4 @@ func (iter *PlanIterator) nextDeleteStep() Step {
 		return del
 	}
 	return nil
-}
-
-// Provider fetches the provider for a given resource type, possibly lazily allocating the plugins for it.  If a
-// provider could not be found, or an error occurred while creating it, a non-nil error is returned.
-func (iter *PlanIterator) Provider(t tokens.Type) (plugin.Provider, error) {
-	pkg := t.Package()
-	prov, err := iter.p.Provider(pkg)
-	if err != nil {
-		return nil, err
-	} else if prov == nil {
-		return nil, errors.Errorf("could not load resource provider for package '%v' from $PATH", pkg)
-	}
-	return prov, nil
 }
