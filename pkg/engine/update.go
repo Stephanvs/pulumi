@@ -29,6 +29,7 @@ import (
 )
 
 // UpdateOptions contains all the settings for customizing how an update (deploy, preview, or destroy) is performed.
+// nolint: structcheck, host is used in a different file
 type UpdateOptions struct {
 	// an optional set of analyzers to run as part of this deployment.
 	Analyzers []string
@@ -38,6 +39,9 @@ type UpdateOptions struct {
 
 	// true if debugging output it enabled
 	Debug bool
+
+	// the plugin host to use for this update
+	host plugin.Host
 }
 
 // ResourceChanges contains the aggregate resource changes by operation type.
