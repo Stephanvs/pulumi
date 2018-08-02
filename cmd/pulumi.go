@@ -22,13 +22,18 @@ import (
 	"runtime"
 	"strings"
 
+	"github.com/blang/semver"
 	"github.com/spf13/cobra"
 
 	"github.com/pulumi/pulumi/pkg/backend"
+	"github.com/pulumi/pulumi/pkg/backend/cloud"
+	"github.com/pulumi/pulumi/pkg/backend/cloud/client"
 	"github.com/pulumi/pulumi/pkg/backend/local"
+	"github.com/pulumi/pulumi/pkg/diag"
 	"github.com/pulumi/pulumi/pkg/diag/colors"
 	"github.com/pulumi/pulumi/pkg/util/cmdutil"
 	"github.com/pulumi/pulumi/pkg/util/logging"
+	"github.com/pulumi/pulumi/pkg/version"
 )
 
 // NewPulumiCmd creates a new Pulumi Cmd instance.
@@ -76,6 +81,15 @@ func NewPulumiCmd() *cobra.Command {
 				}
 			}
 
+			if curVer, err := semver.ParseTolerant(version.Version); err == nil {
+				client := client.NewClient(cloud.DefaultURL(), "")
+				if warn, latest, err := client.CheckIfCLINeedsUpdate(commandContext(), curVer); err == nil && warn {
+					cmdutil.Diag().Warningf(diag.Message("", "Your current version of Pulumi is out of date. The latest "+
+						"version is '%s', while you're on '%s'. Visit https://pulumi.io/install to "+
+						"upgrade"), latest, curVer)
+				}
+			}
+
 			return nil
 		}),
 		PersistentPostRun: func(cmd *cobra.Command, args []string) {
@@ -87,6 +101,7 @@ func NewPulumiCmd() *cobra.Command {
 					logging.Warningf("could not close profiling: %v", err)
 				}
 			}
+
 		},
 	}
 

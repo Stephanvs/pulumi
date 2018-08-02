@@ -146,6 +146,22 @@ func (pc *Client) DownloadTemplate(ctx context.Context, name string) (io.ReadClo
 	return resp.Body, resp.ContentLength, nil
 }
 
+// CheckIfCLINeedsUpdate asks the service if a newer version of the CLI is available and if we should issue a warning
+// or not.
+func (pc *Client) CheckIfCLINeedsUpdate(ctx context.Context, curVersion fmt.Stringer) (bool, string, error) {
+	reqQuery := apitype.CLIUpdateCheckRequest{
+		CurrentVersion: curVersion.String(),
+	}
+
+	var versionInfo apitype.CLIUpdateCheckResponse
+
+	if err := pc.restCall(ctx, "GET", "/api/cli/needs-update", reqQuery, nil, &versionInfo); err != nil {
+		return false, "", err
+	}
+
+	return versionInfo.ShowOutdatedWarning, versionInfo.LatestVersion, nil
+}
+
 // ListStacks lists all stacks for the indicated project.
 func (pc *Client) ListStacks(ctx context.Context, projectFilter *tokens.PackageName) ([]apitype.Stack, error) {
 
